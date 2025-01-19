@@ -18,3 +18,10 @@ The project is designed with the following components:
 - **Securiy**: Using secret key, grant access service princle application as storage data contributor.
 - **Automation and Monitoring**:Use ADF to schedule the data pipelines to run daily. Use the monitoring tools in ADF and Synapse to ensure successful pipeline execution.
 
+## Technology Stack
+- **Azure Data Factory (ADF)**: For orchestrating data movement and transformation.
+- **Azure Data Lake Storage (ADLS)**: For storing raw and processed data.
+- **Azure Databricks**: For data transformation and processing.
+- **Azure Synapse Analytics**: For data warehousing and SQL-based analytics.
+- **Power BI**: For data visualization and reporting.
+- **Azure Key Vault**: For securely managing credentials and secrets.
