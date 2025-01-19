@@ -1,0 +1,53 @@
+SCD (slowly changing dimension)
+- SCD-0:no change
+- SCD-1: upsert (update+insert), nếu id là mới sẽ insert vào, nếu trùng id thì overwrite lại
+- SCD-2: history, sẽ thêm 3 cột nữa là start_date, expired_date, inUse, nếu dimension thay đổi thì add thêm 1 row mới vào
+comb clothing 1/1/2024 1/2/2024 no
+comb hair 1/2/2024 1/1/3000 yes
+- SCD-3 : tạo thêm 1 cột lưu trữ giá trị trước khi thay đổi (pre_prod_cat)
+
+--ADF
+- look up để đọc file cho vòng lặp, nhớ uncheck first row only, cũng có thể đọc talbe trong SQLDabase hoặc csv, trả về lên tới 5000 records đầu tiên (4 MB), trả về 1 file json chứa key (value) và key (count), đọc array json sẽ trả về từng phần tử trong array
+- request tối đa mỗi giây cho azure data lake là 20000 request/s
+- Liên kết kết quả activity này vs activity thông qua on-success 
+@activity('LookupGit').output.value (lấy key value từ kết quả json ra)
+
+--Databricks
+-khi đọc data từ folder có thể sử dụng "sales*", nó sẽ đọc tất cả folder sales mà ko quan tâm sales_2015 hay 2016
+-spark:concat_ws(' ',col('firstname'), col('lastname'))
+
+--Synapse
+- Cần tạo default storage account, ta có thể chọn upload default storage hoặc own external account (hầu hết)
+-dedicated sql pool
+- synapse là unified platform, adf + spark  +warehousing (3 layers), using sql pool (hive sql) để query
+- sysnapse has a seperate spark cluster management layer which is called spark pool  
+- SQL database để tạo warehouse (fact, dimension table), lake database để lưu trữ table khi tạo bằng spark, còn gọi là lakehouse trong databricks
+- Cấp quyền sysnapse workspace vô datalake trực tiếp ko cần thông qua service principle nào hết (azure resource có sẵn credential, identity)
+-managed identity (system managed identity) sẽ được cấp cho mỗi resource khi tạo như 1 ID card, ta cần cấp quyền blog data contributor cho cái ID card đó (manged identity)
+- lakehouse concept : severless database chứa tables, data được lưu trữ trong datalake, bên trên sẽ có abstraction layer(metadata layer hay metastore-unity catalog trong databricks), severless sql pool sẽ query thông qua metadata và trả về query data từ datalake, storing data in datalake rẻ hơn database
+- severless sql pool : data ko lưu trữ trong database
+- openrowset để tạo abstraction layer trên datalake, nhờ thế ta có thể query data dưới data lake
+select 
+    *
+from
+    OPENROWSET(
+        BULK 'https://awstoragehuym.dfs.core.windows.net/silver/AdventureWorks_Calendar/',
+        FORMAT = 'PARQUET'
+    ) as calendar
+    
+- manged table resides bên trong dedicated sql pool, data nằm trong dedicated pool's storage, external point tới data trong data lake
+- sysnapse lake database is spark-based, có thể read và write vô table, có thể tạo managed hoặc external table trong lake database sử dụng spark pools, các bảng đó sẽ được query bằng serverless sql pool(t-sql based for mainly reading)
+- Tạo view ở gold layer trong bằng synapse sql script để query data mà ko cần thông qua openrowset
+- Muốn tạo external table cần tạo external data source lưu url đến container, credential, external file format
+  + Tạo master key cho credential
+  + Tạo database scope credential, có nhiều loại credential, ta sẽ sử dụng managed identity. credential như keycard cho external datasource
+CREATE DATABASE SCOPED CREDENTIAL huym_cred
+WITH IDENTITY = 'Managed Identity'
+- CETAS (create external table as select)
+- external table lưu trữ data thực sự (ở container gold) còn view chỉ để store query
+- Parquet file ko chỉnh sửa bằng DML dc, delta format gồm data version, time travel, file skipping, optimize, delta log acid
+
+---Connect to power BI
+- connect synapse vs power bi cần sql endpoint
+- Get data from power bi -> Copy severless sql endpoint vô server, nhập username vs password
+
