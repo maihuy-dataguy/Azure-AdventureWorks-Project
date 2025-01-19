@@ -4,7 +4,7 @@
 This project serves as a comprehensive implementation to building an end-to-end data engineering pipeline. The goal is to extract customer and sales data from an API Github Source, transform it in the cloud, and generate actionable insights through a Power BI dashboard.
 
 ## System Architecture
-![System Architecture](https://github.com/maihuy-dataguy/Azure-NYC-Taxi-project/blob/main/pics/flow.png)
+![System Architecture](https://github.com/maihuy-dataguy/Azure-AdventureWorks-Project/blob/main/pics/AdventureWorks.png)
 
 The project is designed with the following components:
 
